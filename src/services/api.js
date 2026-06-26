@@ -24,7 +24,6 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token')
-      window.location.href = '/login'
     }
     // If an accounts endpoint fails with a server error, the cached tenant_id
     // may be stale (e.g. tenant was deleted from the database). Clear it so
@@ -117,6 +116,15 @@ export const accountsAPI = {
   getTrialBalance: () => api.get('/accounts/reports/trial-balance'),
   getProfitLoss: () => api.get('/accounts/reports/profit-loss'),
   getBalanceSheet: () => api.get('/accounts/reports/balance-sheet'),
+  getAIInsights: () => api.get('/accounts/ai/insights'),
+}
+
+export const paymentsAPI = {
+  createOrder: (data) => api.post('/payments/create-order', data),
+  verifyPayment: (data) => api.post('/payments/verify', data),
+  listPayments: (params = {}) => api.get('/payments/', { params }),
+  getPayment: (id) => api.get(`/payments/${id}`),
+  getRazorpayKey: () => api.get('/payments/key'),
 }
 
 export const crmAPI = {
@@ -153,7 +161,7 @@ export const crmAPI = {
   addProjectToClient: (id, data) => api.post(`/crm/clients/${id}/add-project`, data),
   
   // Pipelines
-  listPipelines: () => api.get('/crm/pipelines'),
+  listPipelines: (params = {}) => api.get('/crm/pipelines', { params }),
   getPipeline: (id) => api.get(`/crm/pipelines/${id}`),
   createPipeline: (data) => api.post('/crm/pipelines', data),
   updatePipeline: (id, data) => api.patch(`/crm/pipelines/${id}`, data),
@@ -176,7 +184,8 @@ export const crmAPI = {
   // Notifications
   getDueFollowups: (params = {}) => api.get('/crm/contacts/notifications/followups', { params }),
   // Activities
-  listActivities: (params = {}) => api.get('/crm/activities', { params }),
+  // Note: activities endpoints are under the contacts router, so include '/contacts'
+  listActivities: (params = {}) => api.get('/crm/contacts/activities', { params }),
 
   // Lead / Client Logs
   getLeadLogs: (id, params = {}) => api.get(`/crm/leads/${id}/logs`, { params }),

@@ -5,21 +5,18 @@ export const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem('access_token'),
-  )
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
     const initializeUser = async () => {
       const token = localStorage.getItem('access_token')
       if (!token) {
-        setIsAuthenticated(false)
+        setLoading(false)
         return
       }
 
-      setLoading(true)
       try {
         const dashboardResponse = await authAPI.getDashboard()
         setUser(dashboardResponse.data.user)
@@ -43,16 +40,16 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login(username, password)
       const { access_token } = response.data
       localStorage.setItem('access_token', access_token)
-      // fetch and set the current user immediately so UI updates without a refresh
+      setIsAuthenticated(true)
+
+      // Fetch user details right after login so role info is available immediately
       try {
-        const dashboardResponse = await authAPI.getDashboard()
-        setUser(dashboardResponse.data.user)
-        setIsAuthenticated(true)
-      } catch (err) {
-        // If fetching user fails, keep the token but mark authenticated
-        // initializeUser on mount will attempt again; components should handle null `user` safely
-        setIsAuthenticated(true)
+        const dashRes = await authAPI.getDashboard()
+        setUser(dashRes.data.user)
+      } catch {
+        // dashboard fetch is best-effort here
       }
+
       return true
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed')
